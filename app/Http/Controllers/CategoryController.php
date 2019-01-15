@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Category;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use App\Http\Requests;
 
 class CategoryController extends BaseController
@@ -22,11 +21,13 @@ class CategoryController extends BaseController
         $category->slug = $request->input('slug');
 
         if($category->save()){
-            return Response("1",201);
+
+            return $this->sendResponse($category, 'Category created successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error creating category', 'Error creating category');
+
+
     }
 
     public function update($id, Request $request){
@@ -36,11 +37,12 @@ class CategoryController extends BaseController
         $category->slug = $request->input('slug');
 
         if($category->save()){
-            return Response()->json($category, 201);
+
+            return $this->sendResponse($category, 'Categories updated successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error updating category', 'Error updating category');
+
     }
 
     public function destroy($id){
@@ -48,10 +50,11 @@ class CategoryController extends BaseController
         $category = Category::find($id);
 
         if($category->delete()){
-            return Response("1",200);
+
+            return $this->sendResponse('Category deleted successfully', 'Category deleted successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error updating category', 'Error updating category');
+
     }
 }
