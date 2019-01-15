@@ -1,76 +1,79 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\User;
-use App\Http\Resources\User as UserResource;
-use Illuminate\Support\Facades\Auth;
-use Validator;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
     public function index(){
-        return Response()->json(User::orderBy('id', 'desc')->get(), 200);
+
+        return $this->sendResponse(User::orderBy('id', 'desc')->get(), 'User retrieved successfully.');
+
     }
 
-    public $successStatus = 200;
-    /**
-     * login api
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function login(){
+    public function show(){
 
-        if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){
+        return $this->sendResponse(Auth::user(), 'User retrieved successfully.');
 
-            $user = Auth::user();
-
-            $success['token'] =  $user->createToken('indexdigital')-> accessToken;
-
-            return response()->json(['success' => $success], $this-> successStatus);
-        }
-        else{
-            return response()->json(['error'=>'Unauthorised'], 401);
-        }
     }
-    /**
-     * Register api
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function register(Request $request)
+
+
+    public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate( [
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
             'repeat_password' => 'required|same:password',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error'=>$validator->erros()], 401);
+        $user = new User();
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->password = bcrypt($request->input('password'));
+
+        $token = $user->createToken('indexdigital')-> accessToken;
+        $user->remember_token = $token;
+
+        if($user->save()) {
+
+            $success['token'] = $token;
+
+            return $this->sendResponse(['success' => $success], 'User created successfully.');
         }
 
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $input['remember_token'] = '123';
+        return $this->sendError('Error creating user', 'Error creating user');
 
-        $user = User::create($input);
-
-        $success['token'] =  $user->createToken('indexdigital')-> accessToken;
-        $success['name'] =  $user->name;
-
-        return response()->json(['success'=>$success], $this-> successStatus);
     }
-    /**
-     * details api
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function details()
-    {
-        $user = Auth::user();
-        return response()->json(['success' => $user], $this-> successStatus);
+
+    public function update($id, Request $request){
+
+        $user = User::find($id);
+        $user->name = $request->input('name');
+        $user->slug = $request->input('slug');
+
+        if($user->save()){
+
+            return $this->sendResponse($user, 'User updated successfully.');
+        }
+
+        return $this->sendError('Error updating user', 'Error updating user');
+
     }
+
+    public function destroy($id){
+
+        $user = User::find($id);
+
+        if($user->delete()){
+
+            return $this->sendResponse($id, 'User deleted successfully.');
+        }
+
+        return $this->sendError('Error deleting user', 'Error deleting user');
+
+    }
+
 }
