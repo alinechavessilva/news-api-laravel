@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\News;
 use Illuminate\Http\Request;
 
-class NewsController extends Controller
+class NewsController extends BaseController
 {
     public function index(){
-        return Response()->json(News::orderBy('id', 'desc')->get(), 200);
+        return $this->sendResponse(News::orderBy('id', 'desc')
+            ->get(), 'News retrieved successfully.');
+
     }
 
     public function store(Request $request){
@@ -22,11 +24,12 @@ class NewsController extends Controller
         $news->author = $request->input('author');
 
         if($news->save()){
-            return Response("1",201);
+
+            return $this->sendResponse($news, 'News created successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error creating news', 'Error creating news');
+
     }
 
     public function update($id, Request $request){
@@ -40,11 +43,12 @@ class NewsController extends Controller
         $news->author = $request->input('author');
 
         if($news->save()){
-            return Response()->json($news, 201);
+
+            return $this->sendResponse($news, 'News updated successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error updating news', 'Error updating news');
+
     }
 
     public function destroy($id){
@@ -52,10 +56,11 @@ class NewsController extends Controller
         $news = News::find($id);
 
         if($news->delete()){
-            return Response("1",200);
+
+            return $this->sendResponse('News deleted successfully', 'News deleted successfully.');
         }
-        else{
-            return Response("0",304);
-        }
+
+        return $this->sendError('Error updating news', 'Error updating news');
+
     }
 }
