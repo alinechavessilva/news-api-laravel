@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\BaseController as BaseController;
 use App\User;
+use Carbon\Carbon;
+
 
 class AuthController extends BaseController
 {
@@ -20,9 +22,9 @@ class AuthController extends BaseController
 
             $user = Auth::user();
 
-            $success['token'] =  $user->createToken('indexdigital')-> accessToken;
+            $token =  $user->createToken('indexdigital')-> accessToken;
 
-            return $this->sendResponse(['success' => $success], 'User logged successfully.');
+            return $this->sendResponse(['token' => $token], 'User logged successfully.');
 
         }
 
@@ -62,5 +64,40 @@ class AuthController extends BaseController
         return $this->sendError('Error creating user', 'Error creating user');
 
     }
+
+
+    protected function guard()
+    {
+        return Auth::guard('api');
+    }
+
+    public function logout(Request $request)
+    {
+        $user = new User();
+
+        $userTokens = $user->tokens;
+
+        foreach($userTokens as $token) {
+            $token->revoke();
+        }
+
+
+        return Response(['code' => 200, 'message' => 'You are successfully logged out'.$userTokens], 200);
+
+    }
+
+    public function updateToken(Request $request){
+
+        $token = $request->bearerToken();
+
+        $token->expires_at = Carbon::now()->addHours(2);
+
+        $token->save();
+
+        return $this->sendResponse(['token' => $token], 'Token updated successfully.');
+
+
+    }
+
 
 }
